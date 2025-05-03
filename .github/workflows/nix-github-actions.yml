@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v30
-      - name: Install Docker
+      - name: Configure containerd socket permissions
         run: |
           sudo apt-get install -y containerd.io
           sudo systemctl status containerd
@@ -48,5 +48,18 @@ jobs:
           sudo chmod g+w /run/containerd/containerd.sock
           sudo chgrp docker /run/containerd/containerd.sock
           ls -l /run/containerd/containerd.sock
+          docker version
+      - name: Configure containerd
+        run: |
+          sudo sed -i '/^\[plugins\."io.containerd.grpc.v1.cri".containerd.runtimes.runc\]/a \\
+            \ \ [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options] \\
+            \ \ \ \ Mounts = [ \\
+            \ \ \ \ \ \ { source = "/nix", destination = "/nix", type = "bind", options = ["bind", "rw"] }, \\
+            \ \ \ \ \ \ { source = "/etc/nix", destination = "/etc/nix", type = "bind", options = ["bind", "rw"] }, \\
+            \ \ \ \ \ \ { source = "/home", destination = "/home", type = "bind", options = ["bind", "rw"] } \\
+            \ \ \ \ ]' /etc/containerd/config.toml
+          sudo systemctl restart containerd
       - name: Build Nix package
         run: nix build -L '.#${{ matrix.attr }}'
+        env:
+          SOCKET_PATH: /run/containerd/containerd.sock
