@@ -39,27 +39,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            build-users-group = nixbld
       - name: Configure containerd socket permissions
         run: |
           sudo apt-get install -y containerd.io
+          sudo systemctl start containerd
           sudo systemctl status containerd
+          sudo mkdir -p /etc/systemd/system/containerd.service.d/
+          containerd config default | sudo tee /etc/containerd/config.toml
+          sudo sed -i 's/^grpc_gid.*$/grpc_gid = 118/' /etc/containerd/config.toml
+          sudo systemctl restart containerd
+          sudo usermod -aG docker runner || true
+          timeout 10 bash -c 'until [[ -S /run/containerd/containerd.sock ]]; do sleep 1; done'
+          ls -l /run/containerd/containerd.sock
+
+          echo '[Service]' | sudo tee /etc/systemd/system/containerd.service.d/override.conf
+          echo 'ExecStartPost=/bin/chgrp docker /run/containerd/containerd.sock' | sudo tee -a /etc/systemd/system/containerd.service.d/override.conf
+          echo 'ExecStartPost=/bin/chmod g+w /run/containerd/containerd.sock' | sudo tee -a /etc/systemd/system/containerd.service.d/override.conf
+          sudo systemctl daemon-reload
+          sudo systemctl restart containerd
           whoami
           groups
+          id
+          getent group docker
           sudo chmod g+w /run/containerd/containerd.sock
           sudo chgrp docker /run/containerd/containerd.sock
           ls -l /run/containerd/containerd.sock
-          docker version
-      - name: Configure containerd
-        run: |
-          sudo sed -i '/^\[plugins\."io.containerd.grpc.v1.cri".containerd.runtimes.runc\]/a \\
-            \ \ [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options] \\
-            \ \ \ \ Mounts = [ \\
-            \ \ \ \ \ \ { source = "/nix", destination = "/nix", type = "bind", options = ["bind", "rw"] }, \\
-            \ \ \ \ \ \ { source = "/etc/nix", destination = "/etc/nix", type = "bind", options = ["bind", "rw"] }, \\
-            \ \ \ \ \ \ { source = "/home", destination = "/home", type = "bind", options = ["bind", "rw"] } \\
-            \ \ \ \ ]' /etc/containerd/config.toml
-          sudo systemctl restart containerd
       - name: Build Nix package
-        run: nix build -L '.#${{ matrix.attr }}'
+        run: |
+          export SOCKET_PATH="/run/containerd/containerd.sock"
+          sg docker -c "nix build -L --option sandbox false '.#${{ matrix.attr }}'"
         env:
           SOCKET_PATH: /run/containerd/containerd.sock
