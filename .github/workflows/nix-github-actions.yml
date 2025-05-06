@@ -68,7 +68,8 @@ jobs:
           ls /nix/store
           which nix
           sudo usermod -aG docker runner || true
-          sudo chmod g+w /run/containerd/containerd.sock
+          ls -l /run/containerd/containerd.sock
+          sudo chmod 666 /run/containerd/containerd.sock
           sudo chgrp docker /run/containerd/containerd.sock
           ls -l /run/containerd/containerd.sock
           test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
