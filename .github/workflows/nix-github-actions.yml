@@ -51,7 +51,7 @@ jobs:
           containerd config default | sudo tee /etc/containerd/config.toml
           sudo sed -i 's/^grpc_gid.*$/grpc_gid = 118/' /etc/containerd/config.toml
           sudo systemctl restart containerd
-          sudo usermod -aG docker runner || true
+
           timeout 10 bash -c 'until [[ -S /run/containerd/containerd.sock ]]; do sleep 1; done'
           ls -l /run/containerd/containerd.sock
 
@@ -60,16 +60,23 @@ jobs:
           echo 'ExecStartPost=/bin/chmod g+w /run/containerd/containerd.sock' | sudo tee -a /etc/systemd/system/containerd.service.d/override.conf
           sudo systemctl daemon-reload
           sudo systemctl restart containerd
+          timeout 10 bash -c 'until [[ -S /run/containerd/containerd.sock ]]; do sleep 1; done'
           whoami
           groups
           id
           getent group docker
+          ls /nix/store
+          which nix
+          sudo usermod -aG docker runner || true
           sudo chmod g+w /run/containerd/containerd.sock
           sudo chgrp docker /run/containerd/containerd.sock
           ls -l /run/containerd/containerd.sock
+          test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
+          sudo -u runner test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
+          sudo -E env "PATH=$PATH" "NIX_PATH=$NIX_PATH" test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
       - name: Build Nix package
         run: |
           export SOCKET_PATH="/run/containerd/containerd.sock"
-          sg docker -c "nix build -L --option sandbox false '.#${{ matrix.attr }}'"
+          sudo -E env "PATH=$PATH" "NIX_PATH=$NIX_PATH" nix build -L --option sandbox false '.#${{ matrix.attr }}'
         env:
           SOCKET_PATH: /run/containerd/containerd.sock
