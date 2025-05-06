@@ -75,14 +75,12 @@ jobs:
           test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
           sudo -u runner test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
           sudo -E env "PATH=$PATH" "NIX_PATH=$NIX_PATH" test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
+      - name: Setup CNI configuration
+        run: |
+          sudo mkdir -p /etc/cni/net.d
       - name: Build Nix package
         run: |
           export SOCKET_PATH="/run/containerd/containerd.sock"
-          export CNI_BIN_DIR="/nix/store/vrnv8mvvbfj04zma6hr035chj0x5f5i3-cni-plugins-1.6.1/bin"
-          export CNI_CONF_DIR="/etc/cni/net.d"
-          export CNI_TOOL="/nix/store/c1ig375fgbv0ykv3amy94ps5sn0cyi7c-cni-1.2.3/bin/cnitool"
-          which cnitool
-          which bridge
           sudo -E sg docker -c "env "PATH=$PATH" "NIX_PATH=$NIX_PATH" nix build -L --option sandbox false '.#${{ matrix.attr }}'"
         env:
           SOCKET_PATH: /run/containerd/containerd.sock

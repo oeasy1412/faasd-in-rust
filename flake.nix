@@ -31,6 +31,13 @@
         commonArgs = {
           inherit src;
           strictDeps = true;
+
+          preBuild = ''
+            export CNI_BIN_DIR="${pkgs.cni-plugins}/bin"
+            export CNI_CONF_DIR="/etc/cni/net.d"
+            export CNI_TOOL="${pkgs.cni}/bin/cnitool"
+            export SOCKET_PATH="/run/containerd/containerd.sock"
+          '';
           # Add additional build inputs here
           buildInputs = with pkgs; [
             cni
