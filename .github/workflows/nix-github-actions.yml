@@ -77,6 +77,6 @@ jobs:
       - name: Build Nix package
         run: |
           export SOCKET_PATH="/run/containerd/containerd.sock"
-          sudo -E env "PATH=$PATH" "NIX_PATH=$NIX_PATH" nix build -L --option sandbox false '.#${{ matrix.attr }}'
+          sudo -E sg docker -c "env "PATH=$PATH" "NIX_PATH=$NIX_PATH" nix build -L --option sandbox false '.#${{ matrix.attr }}'"
         env:
           SOCKET_PATH: /run/containerd/containerd.sock
