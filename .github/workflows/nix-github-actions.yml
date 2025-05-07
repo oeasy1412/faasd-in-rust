@@ -70,10 +70,6 @@ jobs:
         run: |
           sudo mkdir -p /var/run/netns
           sudo chmod 777 /var/run/netns
-          mount | grep /netns
-          sudo mount -t tmpfs tmpfs /var/run/netns
-          sudo mount --make-rshared /var/run/netns # 手动挂载为共享命名空间
-          mount | grep /netns
           ls -l /var/run/netns
           sudo mkdir -p /etc/cni/net.d
           sudo ctr namespaces create default
@@ -82,4 +78,4 @@ jobs:
       - name: Build Nix package
         run: |
           export SOCKET_PATH="/run/containerd/containerd.sock"
-          sudo -E env "PATH=$PATH" "NIX_PATH=$NIX_PATH" nix build -L --option sandbox false '.#${{ matrix.attr }}'
+          sudo -u root -E env "PATH=$PATH" "NIX_PATH=$NIX_PATH" nix build -L --option sandbox false '.#${{ matrix.attr }}'
