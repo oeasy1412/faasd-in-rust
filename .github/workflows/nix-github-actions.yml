@@ -53,7 +53,6 @@ jobs:
           sudo systemctl restart containerd
 
           timeout 10 bash -c 'until [[ -S /run/containerd/containerd.sock ]]; do sleep 1; done'
-          ls -l /run/containerd/containerd.sock
 
           echo '[Service]' | sudo tee /etc/systemd/system/containerd.service.d/override.conf
           echo 'ExecStartPost=/bin/chgrp docker /run/containerd/containerd.sock' | sudo tee -a /etc/systemd/system/containerd.service.d/override.conf
@@ -61,22 +60,17 @@ jobs:
           sudo systemctl daemon-reload
           sudo systemctl restart containerd
           timeout 10 bash -c 'until [[ -S /run/containerd/containerd.sock ]]; do sleep 1; done'
-          whoami
-          groups
-          id
-          getent group docker
-          ls /nix/store
-          which nix
           sudo usermod -aG docker runner || true
           ls -l /run/containerd/containerd.sock
           sudo chmod 666 /run/containerd/containerd.sock
           sudo chgrp docker /run/containerd/containerd.sock
           ls -l /run/containerd/containerd.sock
-          test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
-          sudo -u runner test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
           sudo -E env "PATH=$PATH" "NIX_PATH=$NIX_PATH" test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
       - name: Setup CNI configuration
         run: |
+          sudo mkdir -p /var/run/netns
+          sudo chmod 777 /var/run/netns
+          ls -l /var/run/netns
           sudo mkdir -p /etc/cni/net.d
           sudo ctr namespaces create default
           sudo ctr namespaces create moby
@@ -84,9 +78,4 @@ jobs:
       - name: Build Nix package
         run: |
           export SOCKET_PATH="/run/containerd/containerd.sock"
-          sudo -E sg docker -c "env "PATH=$PATH" "NIX_PATH=$NIX_PATH" nix build -L --option sandbox false '.#${{ matrix.attr }}'"
-        env:
-          SOCKET_PATH: /run/containerd/containerd.sock
-          CNI_BIN_DIR: /nix/store/vrnv8mvvbfj04zma6hr035chj0x5f5i3-cni-plugins-1.6.1/bin
-          CNI_CONF_DIR: /etc/cni/net.d
-          CNI_TOOL: /nix/store/c1ig375fgbv0ykv3amy94ps5sn0cyi7c-cni-1.2.3/bin/cnitool
+          sudo -E env "PATH=$PATH" "NIX_PATH=$NIX_PATH" nix build -L --option sandbox false '.#${{ matrix.attr }}'

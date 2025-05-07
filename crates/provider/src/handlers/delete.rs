@@ -18,7 +18,6 @@ pub async fn delete_handler(info: web::Json<DeleteContainerInfo>) -> impl Respon
         .unwrap_or_else(|| consts::DEFAULT_FUNCTION_NAMESPACE.to_string());
 
     let namespaces = ContainerdManager::list_namespaces().await.unwrap();
-    log::info!("{:?}", namespaces);
     if !namespaces.contains(&namespace.to_string()) {
         return HttpResponse::NotFound().body(format!("Namespace '{}' does not exist", namespace));
     }
