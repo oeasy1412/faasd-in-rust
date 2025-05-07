@@ -78,6 +78,9 @@ jobs:
       - name: Setup CNI configuration
         run: |
           sudo mkdir -p /etc/cni/net.d
+          sudo ctr namespaces create default
+          sudo ctr namespaces create moby
+          sudo ctr namespaces ls
       - name: Build Nix package
         run: |
           export SOCKET_PATH="/run/containerd/containerd.sock"
