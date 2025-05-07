@@ -41,7 +41,11 @@ mod integration_tests {
         assert_eq!(resp.status(), StatusCode::SERVICE_UNAVAILABLE);
         let response_body = test::read_body(resp).await;
         let response_str = std::str::from_utf8(&response_body).unwrap();
-        assert!(response_str.contains("Failed to get function"));
+        assert!(
+            response_str.contains("Failed to get function"),
+            "response_str: {:?}",
+            response_str
+        );
 
         // test delete no-found-function in namespace 'default'
         let req = test::TestRequest::delete()
@@ -54,7 +58,9 @@ mod integration_tests {
         let response_str = std::str::from_utf8(&response_body).unwrap();
         assert!(
             response_str
-                .contains("Function 'test-no-found-function' not found in namespace 'default'")
+                .contains("Function 'test-no-found-function' not found in namespace 'default'"),
+            "response_str: {:?}",
+            response_str
         );
 
         // test deploy in namespace 'default'
@@ -75,7 +81,11 @@ mod integration_tests {
         let response_body = test::read_body(resp).await;
         let response_str = std::str::from_utf8(&response_body).unwrap();
         log::info!("{}", response_str);
-        assert!(response_str.contains("Function test-function deployment initiated successfully."));
+        assert!(
+            response_str.contains("Function test-function deployment initiated successfully."),
+            "response_str: {:?}",
+            response_str
+        );
 
         sleep(Duration::from_secs(2));
         // test proxy in namespace 'default'
@@ -87,7 +97,11 @@ mod integration_tests {
 
         let response_body = test::read_body(resp).await;
         let response_str = std::str::from_utf8(&response_body).unwrap();
-        assert!(response_str.contains("Welcome to nginx!"));
+        assert!(
+            response_str.contains("Welcome to nginx!"),
+            "response_str: {:?}",
+            response_str
+        );
 
         // test delete in namespace 'default'
         let req = test::TestRequest::delete()
@@ -99,6 +113,10 @@ mod integration_tests {
 
         let response_body = test::read_body(resp).await;
         let response_str = std::str::from_utf8(&response_body).unwrap();
-        assert!(response_str.contains("Function test-function deleted successfully."));
+        assert!(
+            response_str.contains("Function test-function deleted successfully."),
+            "response_str: {:?}",
+            response_str
+        );
     }
 }
