@@ -70,6 +70,10 @@ jobs:
         run: |
           sudo mkdir -p /var/run/netns
           sudo chmod 777 /var/run/netns
+          mount | grep /netns
+          sudo mount -t tmpfs tmpfs /var/run/netns
+          sudo mount --make-rshared /var/run/netns # 手动挂载为共享命名空间
+          mount | grep /netns
           ls -l /var/run/netns
           sudo mkdir -p /etc/cni/net.d
           sudo ctr namespaces create default
