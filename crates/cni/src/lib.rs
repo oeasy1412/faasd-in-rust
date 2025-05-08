@@ -2,7 +2,7 @@ type Err = Box<dyn std::error::Error>;
 
 use lazy_static::lazy_static;
 use serde_json::Value;
-use std::{fmt::Error, net::IpAddr, path::Path};
+use std::{fmt::Error, net::IpAddr, path::Path, process::Command};
 
 mod command;
 mod netns;
@@ -38,7 +38,18 @@ pub fn create_cni_network(cid: String, ns: String) -> Result<String, Err> {
     let netns = util::netns_from_cid_and_cns(&cid, &ns);
     let mut ip = String::new();
 
-    netns::create(&netns)?;
+    log::info!("create ns: {}", ns);
+    let create_ns_cmd = Command::new("ip")
+        .args(["netns", "add", &netns])
+        .output()
+        .expect("Failed to create network namespace");
+
+    if !create_ns_cmd.status.success() {
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Failed to create network namespace",
+        )));
+    }
 
     let output = cmd::cni_add_bridge(netns.as_str(), DEFAULT_NETWORK_NAME);
 
