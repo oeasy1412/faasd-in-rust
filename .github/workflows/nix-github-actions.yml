@@ -70,7 +70,12 @@ jobs:
         run: |
           sudo mkdir -p /var/run/netns
           sudo chmod 777 /var/run/netns
+          ls -ld /var/run/netns
           ls -l /var/run/netns
+          sudo apt-get install -y iproute2
+          sudo ip netns add ci-test-ns  # 验证权限
+          sudo ip netns ls
+          sudo ip netns delete ci-test-ns
           sudo mkdir -p /etc/cni/net.d
           sudo ctr namespaces create default
           sudo ctr namespaces create moby
