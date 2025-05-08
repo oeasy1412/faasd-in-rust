@@ -83,4 +83,5 @@ jobs:
       - name: Build Nix package
         run: |
           export SOCKET_PATH="/run/containerd/containerd.sock"
-          sudo -u root -E env "PATH=$PATH" "NIX_PATH=$NIX_PATH" nix build -L --option sandbox false '.#${{ matrix.attr }}'
+          sudo -u root ls -l /proc/self/ns/net
+          sudo -u root -E env "PATH=$PATH:/usr/sbin:/sbin" "NIX_PATH=$NIX_PATH" nix build -L --option sandbox false '.#${{ matrix.attr }}'
