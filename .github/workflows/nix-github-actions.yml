@@ -68,6 +68,9 @@ jobs:
           sudo -E env "PATH=$PATH" "NIX_PATH=$NIX_PATH" test -w /run/containerd/containerd.sock && echo "Writable" || echo "Protected"
       - name: Setup CNI configuration
         run: |
+          sudo mkdir -p /var/run/netns
+          sudo chmod 777 /var/run/netns
+          ls -l /var/run/netns
           sudo mkdir -p /etc/cni/net.d
           sudo ctr namespaces create default
           sudo ctr namespaces create moby
